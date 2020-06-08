@@ -1,0 +1,8 @@
+For the testing generated results of "mr2ct_spectral" experiment
+
+1) The batch_size was set to 2. Spectral Normalization was used.
+2) The images loaded during testing (np.load()) loads images in random order. Therefore, based on comparison here are the pairings:
+	(i)	normalized_02_wat_crpd_noise_7 (MR) 	= divtest_spec_0007
+	(ii) 	normalized_patient4_160 (MR) 		= divtest_spec_0001
+	(iii) 	normalized_patient5_160_noise_4 	= divtest_spec_0005
+

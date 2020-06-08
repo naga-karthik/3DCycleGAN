@@ -1,0 +1,16 @@
+Documenting all the changes made to the new dataset
+
+MRI: 
+1) The rotations are kept as it is i.e. the same data is copied from the old version of the dataset.
+2) Gaussian noise addition is changed: mean and std are now fixed -> mean = 0 and std = 0.01
+3) Elastic deformation is used a new data augmentation method. This was originally used in 2D and 3D Unet papers. For each original volume, 10 volumes are deformed with a constant voxel grid size of 3x3x3 with std=4, and 5 volumes with voxel grid of size 5x5x5 with std=4.
+4) The volumes have now also been constrast stretched (a type of normalization, but "less harsh" than histogram equalization)
+
+CT: 
+Exactly same as the steps which have been followed for MRI images
+Original -> 4 volumes
+Rotations -> 10 rotations each = 40 volumes
+Noise addition -> 10 each = 40
+Elastic deformation -> 15 deformations each = 60 volumes
+Contrast strectching -> 15 volumes chosen at random for each volume = 60 
+Therefore, the total size of the CT dataset -> 4 + 40 + 40 + 60 + 60 = 204

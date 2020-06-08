@@ -1,0 +1,88 @@
+Things to look into to improve:
+	DONE: Use parallel computation (nn.DataParallel) to distribute memory requirements over GPUs, all so that Resnet3D could be deployed. (issue now is that the batchsize needs to be greater than the number of GPUs being used) -> (this is done, though not for ResNet3D but for an updated Unet model)
+2) Patches of voxel data (96 x 96 x 96) instead of the entire volume at once? 
+	DONE: Run with small batch size only (1 or 2) -> seem to be getting better results. (TRUE)
+4) Check the volumes for mode collapse from the saved training images. If mode collapse happens, then that explains the less-diverse set of inferred images.
+	DONE: Revamp the training data a bit, include diverse images in the test folder. The current test folder contains only 1 volume with only its varieties. (This is taken care of) 
+5) Remove 150 volumes from the training set (that are somewhat related to the test volumes)
+6) Must run the model for more epochs (100 is not enough)
+
+
+Justification for using 3D CycleGAN instead of using 2D methods and techniques:
+
+The objective is to be able to segment bone structure from MRI images with as little manual intervention as possible. Therefore, translating the image to CT domain highlights the bone structures, upon which, general thresholding algorithms (Otsu's algorithm, for instance) can be used. In order to reconstruct a 3D volume, the spatial correlation between the slices is important. Slicing the volume into independent slices prevents us from using the additional spatial information provided by 3D images. Therefore, by training the model with a 3D image, we are letting the network learn the features required from obtaining a volume reconstruction.
+
+
+General Remarks and Information:
+
+a) THE DATASET
+Domain A: MRI Volumes and Domain B: CT volumes
+
+MRI Training set size: 752 volumes
+	Original Data -> MICCAI - 16 volumes
+			 Scoliotic - 11 + 10 volumes
+	Augmentation Method -> Random rotation sampled from a normal distribution with mean=0 and std=10. Each volume 10 rotations -> 160 volumes. Gaussian white noise added to each volume sampled randomly from a mean [-0.1, 0.1] and std [0.01, 0.05, 0.1]. 
+	Augmented Data -> MICCAI - each volume 10 rotations (160 volumes), each volume - noise added 10 times (160 volumes) 
+			  Scoliotic - each volume 10 rotations (110 + 100 volumes), each volume noise added 10 times (100 + 110)
+CT Training set size: 84 volumes 
+	Original Data -> 4 volumes (CTA Cardio, CT Abdomen from Slicer and CT Tronc 2, CT Tronc 3 from Florian's archive)
+	Augmentation Method -> Same method as written above
+	Augmented Data -> each volume (10 rotations + 10 noise additions) = 21x4 = 84
+
+b) Architecture used: 3D UNet for all experiments. Resnet3D requires massive amount of memory (even 32GB GPU memory is not enough).
+		      Resnet3D with 2 residual blocks works with 32GB memory. 
+
+
+Important observations:
+
+--> For "mr2ct_new_unetUpdated" folder
+	From the model saved after 100 with decay starting from 75 epochs
+	Training time: 2 days 3 hours (ran on 2 GPUs)
+1) New dataset has been used (mr2ct_new). The batch size was set to be 2.
+2) Seems like 100 epochs are not enough. All 15 test results are of only volume (not even a slight change).
+ 
+
+--> For "mr2ct_unet_batchsize16" folder
+	From the model saved after 200 epochs i.e. netG_A2B_200.pth and same for B2A.
+	Training time: 1 day 19 hours 41 minutes
+1) The results from different inputs, all look more or less the same. (see diverse_epoch folder) 
+2) The laminae on either side is not captured properly. Probably because the input data itself does not have laminae, it mostly focuses on the vertebral body, disc and the spinous process.
+3) 
+
+--> For "mr2ct_unet_gradient_consistency_batchsize8" folder
+	From the model saved after 200 epochs
+	Training time: 1 day 23 hours 49 minutes
+1) Diversity is again a problem - all generated volumes look the same.
+2) Compared to unet_batchsize16, the results seem to be worse with gradient consistency.
+3) The low quality can be attributed to the fact that the hyperparameter for enforcing cycle-consisteny is 3 (compared to 10 in others)
+
+--> For "mr2ct_spectral" folder
+	From the "only" model saved after 200 epochs i.e. netG_A2B.pth and B2A.pth
+	Training time: 4 days 
+1) Important: The batchsize=2 for this experiment. It has obtained the best results till now.
+2) Diverse_test images appear to different as in they can paired with their input MRI images. Curvature of spine is visible.
+
+--> Perceptual Loss implementation: What worked and what did not work
+
+1) The VGG16 network was used as a feature extractor network. Important points about VGG16: works with 2D RGB images only.
+2) Adversarial loss + cycle-consistency loss + identity loss + perceptual loss on top of an updated Unet architecture faced the memory overflow problem. Even with batch-size 2 and 4 GPUs, there is a CUDA memory exceeded error.
+3) Adversarial loss + cycle-consistency loss + perceptual loss on top of old Unet architecture works with batchsize 2, but takes about 20 days
+4) 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

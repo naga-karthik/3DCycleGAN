@@ -1,0 +1,18 @@
+Information regarding the new files created, changes made and experiments performed
+
+DATASET: A new dataset has been created, with new augmentation methods - (i) elastic deformation and (ii) contrast stretching, on top of the existing, random rotation and white noise addition.
+	MRI training data - 1214 volumes	MRI testing data - 15 volumes
+	CT training data - 200 volumes		
+
+Observations:
+1) torch.nn.DataParallel is not working as expected because there is a huge imbalance in GPU memory consumption. Only one GPU uses all the memory and increasing batch size causes out-of-memory error.	(Solution: torch.nn.parallel.DistributedDataParallel)
+2) The distributed package works well to avoid the memory imbalance problem. On initial testing, it was observed that when running on 2 GPUs, both their memories were being used equally. 
+
+
+Experiments to run:
+1) Vanilla CycleGAN3D model with Adversarial, Cycle-consisteny, and Identity losses for 250 epochs
+2) CycleGAN3D with perceptual loss and the remaining standard losses. (works only on Cedar's GPUs because it consumes about 30GB memory on both GPUs)
+
+
+
+
