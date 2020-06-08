@@ -1,0 +1,8 @@
+datasets/
+__pycache__/
+saved_images/
+saved_models/
+compute_canada/checkpoints/
+nrrd_files/
+blg*
+cdr*
