@@ -19,24 +19,24 @@ class ModifiedResUnetGenerator3D(nn.Module):
         self.tanh = nn.Tanh()
 
         # Level 1 context pathway
-        self.conv_c11 = nn.Conv3d(self.in_channels, self.init_featMaps, kernel_size=3, stride=1, padding=1)
+        self.conv_c11 = spectral_norm(nn.Conv3d(self.in_channels, self.init_featMaps, kernel_size=3, stride=1, padding=1))
 
-        self.conv_c1 = nn.Conv3d(self.init_featMaps, self.init_featMaps, kernel_size=3, stride=1, padding=1)
+        self.conv_c1 = spectral_norm(nn.Conv3d(self.init_featMaps, self.init_featMaps, kernel_size=3, stride=1, padding=1))
         self.lrelu_conv_c1 = self.lrelu_conv_block(self.init_featMaps, self.init_featMaps)
         self.norm_c1 = nn.InstanceNorm3d(init_featMaps)
 
         # Level 2 context pathway
-        self.conv_c2 = nn.Conv3d(self.init_featMaps, self.init_featMaps*2, kernel_size=3, stride=2, padding=1)
+        self.conv_c2 = spectral_norm(nn.Conv3d(self.init_featMaps, self.init_featMaps*2, kernel_size=3, stride=2, padding=1))
         self.norm_lrelu_conv_c2 = self.norm_lrelu_conv_block(self.init_featMaps*2, self.init_featMaps*2)
         self.norm_c2 = nn.InstanceNorm3d(self.init_featMaps*2)
 
         # Level 3 context pathway
-        self.conv_c3 = nn.Conv3d(self.init_featMaps*2, self.init_featMaps*4, kernel_size=3, stride=2, padding=1)
+        self.conv_c3 = spectral_norm(nn.Conv3d(self.init_featMaps*2, self.init_featMaps*4, kernel_size=3, stride=2, padding=1))
         self.norm_lrelu_conv_c3 = self.norm_lrelu_conv_block(self.init_featMaps*4, self.init_featMaps*4)
         self.norm_c3 = nn.InstanceNorm3d(self.init_featMaps*4)
 
         # Level 4 context pathway, level 0 localization pathway (bottleneck)
-        self.conv_c4 = nn.Conv3d(self.init_featMaps*4, self.init_featMaps*8, kernel_size=3, stride=2, padding=1)
+        self.conv_c4 = spectral_norm(nn.Conv3d(self.init_featMaps*4, self.init_featMaps*8, kernel_size=3, stride=2, padding=1))
         self.norm_lrelu_conv_c4 = self.norm_lrelu_conv_block(self.init_featMaps*8, self.init_featMaps*8)
         self.norm_c4 = nn.InstanceNorm3d(self.init_featMaps*8)
 
@@ -45,46 +45,46 @@ class ModifiedResUnetGenerator3D(nn.Module):
         # self.norm_l0 = nn.InstanceNorm3d(self.init_featMaps*4)
 
         # Level 5 context pathway, level 0 localization pathway (bottleneck)
-        self.conv_c5 = nn.Conv3d(self.init_featMaps*8, self.init_featMaps*16, kernel_size=3, stride=2, padding=1)
+        self.conv_c5 = spectral_norm(nn.Conv3d(self.init_featMaps*8, self.init_featMaps*16, kernel_size=3, stride=2, padding=1))
         self.norm_lrelu_conv_c5 = self.norm_lrelu_conv_block(self.init_featMaps*16, self.init_featMaps*16)
 
         self.norm_relu_ups_l0 = self.norm_relu_upsample_conv_norm_relu_block(self.init_featMaps*16,self.init_featMaps*8)
-        self.conv_l0 = nn.Conv3d(self.init_featMaps * 8, self.init_featMaps * 8, kernel_size=1, stride=1, padding=0)
+        self.conv_l0 = spectral_norm(nn.Conv3d(self.init_featMaps * 8, self.init_featMaps * 8, kernel_size=1, stride=1, padding=0))
         self.norm_l0 = nn.InstanceNorm3d(self.init_featMaps * 8)
 
         # Level 1 localization pathway
         self.conv_norm_relu_l1 = self.conv_norm_relu_block(self.init_featMaps*16, self.init_featMaps*16)
-        self.conv_l1 = nn.Conv3d(self.init_featMaps*16, self.init_featMaps*8, kernel_size=1, stride=1, padding=0)
+        self.conv_l1 = spectral_norm(nn.Conv3d(self.init_featMaps*16, self.init_featMaps*8, kernel_size=1, stride=1, padding=0))
         self.norm_relu_ups_l1 = self.norm_relu_upsample_conv_norm_relu_block(self.init_featMaps*8, self.init_featMaps*4)
 
         # Level 2 localization pathway
         self.conv_norm_relu_l2 = self.conv_norm_relu_block(self.init_featMaps*8, self.init_featMaps*8)
-        self.conv_l2 = nn.Conv3d(self.init_featMaps*8, self.init_featMaps*4, kernel_size=1, stride=1, padding=0)
+        self.conv_l2 = spectral_norm(nn.Conv3d(self.init_featMaps*8, self.init_featMaps*4, kernel_size=1, stride=1, padding=0))
         self.norm_relu_ups_l2 = self.norm_relu_upsample_conv_norm_relu_block(self.init_featMaps*4, self.init_featMaps*2)
 
         # Level 3 localization pathway
         self.conv_norm_relu_l3 = self.conv_norm_relu_block(self.init_featMaps*4, self.init_featMaps*4)
-        self.conv_l3 = nn.Conv3d(self.init_featMaps*4, self.init_featMaps*2, kernel_size=1, stride=1, padding=0)
+        self.conv_l3 = spectral_norm(nn.Conv3d(self.init_featMaps*4, self.init_featMaps*2, kernel_size=1, stride=1, padding=0))
         self.norm_relu_ups_l3 = self.norm_relu_upsample_conv_norm_relu_block(self.init_featMaps*2, self.init_featMaps)
 
         # Level 4 localization pathway
         self.conv_norm_relu_l4 = self.conv_norm_relu_block(self.init_featMaps*2, self.init_featMaps*2)
-        self.conv_l4 = nn.Conv3d(self.init_featMaps*2, self.out_channels, kernel_size=1, stride=1, padding=0)
+        self.conv_l4 = spectral_norm(nn.Conv3d(self.init_featMaps*2, self.out_channels, kernel_size=1, stride=1, padding=0))
 
-        self.ds2_conv1x1 = nn.Conv3d(self.init_featMaps*8, self.out_channels, kernel_size=1, padding=0, stride=1)
-        self.ds3_conv1x1 = nn.Conv3d(self.init_featMaps*4, self.out_channels, kernel_size=1, padding=0, stride=1)
+        self.ds2_conv1x1 = spectral_norm(nn.Conv3d(self.init_featMaps*8, self.out_channels, kernel_size=1, padding=0, stride=1))
+        self.ds3_conv1x1 = spectral_norm(nn.Conv3d(self.init_featMaps*4, self.out_channels, kernel_size=1, padding=0, stride=1))
 
     def lrelu_conv_block(self, in_features, out_features):
         return nn.Sequential(self.lrelu,
-                             nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1))
+                             spectral_norm(nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1)))
 
     def norm_lrelu_conv_block(self, in_features, out_features):
         return nn.Sequential(nn.InstanceNorm3d(in_features),
                              self.lrelu,
-                             nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1))
+                             spectral_norm(nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1)))
 
     def conv_norm_relu_block(self, in_features, out_features):
-        return nn.Sequential(nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1),
+        return nn.Sequential(spectral_norm(nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1)),
                              nn.InstanceNorm3d(in_features),
                              self.relu)
 
@@ -92,7 +92,7 @@ class ModifiedResUnetGenerator3D(nn.Module):
         return nn.Sequential(nn.InstanceNorm3d(in_features),
                              self.relu,
                              self.upscale,
-                             nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1),
+                             spectral_norm(nn.Conv3d(in_features, out_features, kernel_size=3, stride=1, padding=1)),
                              nn.InstanceNorm3d(in_features),
                              self.relu)
 
@@ -355,6 +355,7 @@ class UnetGenerator3DUpdated(nn.Module):
 #   3) In one of the questions on Github's issues, it was noted that for calculating the patch size seen, the padding
 #      is not taken into account. (o/p size - 1)*stride + kernel size = i/p size. Padding is just seen as an indicator
 #      for localizing the boundary.
+#   4) Reducing the capacity of the discriminator by decreasing the number of filters by 2 for each layer
 
 class PatchGANDiscriminatorwithSpectralNorm(nn.Module):
 
@@ -384,15 +385,15 @@ class PatchGANDiscriminatorwithSpectralNorm(nn.Module):
 
         # This PatchGAN architecture has 6 layers (1 more than the original). 46x46x46 sized patches are seen by
         # the discriminator.
-        model = [spectral_norm(nn.Conv3d(input_nc, 64, 4, stride=2, padding=1)),
+        model = [spectral_norm(nn.Conv3d(input_nc, 32, 4, stride=2, padding=1)),    # from input_nc, 64
                  nn.LeakyReLU(0.2, inplace=True)]
-        model += [spectral_norm(nn.Conv3d(64, 128, kernel_size=4, stride=2, padding=1)),
+        model += [spectral_norm(nn.Conv3d(32, 64, kernel_size=4, stride=2, padding=1)),    # 64, 128
                   nn.LeakyReLU(0.2, inplace=True)]
-        model += [spectral_norm(nn.Conv3d(128, 256, kernel_size=4, stride=1, padding=1)),
+        model += [spectral_norm(nn.Conv3d(64, 128, kernel_size=4, stride=1, padding=1)),   # 128, 256
                   nn.LeakyReLU(0.2, inplace=True)]
-        model += [spectral_norm(nn.Conv3d(256, 512, kernel_size=4, stride=1, padding=1)),
+        model += [spectral_norm(nn.Conv3d(128, 256, kernel_size=4, stride=1, padding=1)),   # 256, 512
                   nn.LeakyReLU(0.2, inplace=True)]
-        model += [spectral_norm(nn.Conv3d(512, 1, kernel_size=4, padding=1))]
+        model += [spectral_norm(nn.Conv3d(256, 1, kernel_size=4, padding=1))]       # 512, 1
 
         self.model = nn.Sequential(*model)
 
