@@ -187,7 +187,7 @@ class ModifiedResUnetGenerator3D(nn.Module):
         ds2_ds3_ups = self.upscale(ds1_ds2_ups + ds3_conv)
         out = out_pred + ds2_ds3_ups
         # print("final output shape: ", out.shape)
-        return out
+        return self.tanh(out)
 
 
 # -------- Adding the option of the possibility of using a Unet Generator --------

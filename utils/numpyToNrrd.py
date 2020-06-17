@@ -4,64 +4,76 @@ import glob, os, sys
 import matplotlib.pyplot as plt
 
 # # --------------- for training .npy files ----------------
+# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/training_generated/' \
+# #             'mr2ct_new_unetUpdated/realA2fakeB/'
 # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/training_generated/' \
-#             'mr2ct_new_unetUpdated/realA2fakeB/'
-# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/training_generated' \
-# #             '/mr2ct_unet_batchsize16/realA2fakeB/'
-# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/training_generated/
-# #              mr2ct_spectral/realA2fakeB/'
-# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct/test/A/
-# #              normalized_patient4_160.npy'
-#
+#             'mr2ct_v1_lighterUnet_gradientConsistency_batchSize4/realA2fakeB/'
+# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/training_generated/' \
+# #             'mr2ct_spectral/realA2fakeB/'
+# # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
+# #             'mr2ct_spectral/realA2fakeB/diverse_epoch_200/0001.npy'
+# # files = sorted(glob.glob(load_path))
 # path = load_path+'*.npy'
 # files = sorted(glob.glob(path))
 #
-# save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_new_unetUpdated'
+# # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_new_unetUpdated'
 # # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_unet'
-# # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_spectral'
+# save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/' \
+#             'mr2ct_v1_lighterUnet_gradientConsistency_batchSize4'
+# # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files'
 # if not os.path.exists(save_path):
 #     os.mkdir(save_path)
-# file_name = files[15]
+# file_name = files[0]
 # f = file_name.split('/')
-# print(f[-1][:-4])
+# # print(f[-1][:-4])
 # mri_data = np.load(file_name).squeeze(0)    # loaded as: 48x256x128
-# print(mri_data.shape, mri_data.dtype, mri_data.min(), mri_data.max())
+# # print(mri_data.shape, mri_data.dtype, mri_data.min(), mri_data.max())
 # # sys.exit()
 # mri_data_1 = np.transpose(mri_data, (0, 2, 1))
+# # mri_data_1 = np.transpose(mri_data, (2, 1, 0))
 # # bringing it in 0-255 range
 # # mri_data_1 = (255*((mri_data_1+1)/2.0)).astype(np.uint8)   # first bringing it into 0-1 range and multipyling my 255
 # nrrd.write(save_path+'/train_' + f[-1][:-4] + '.nrrd', mri_data_1)
-# # nrrd.write(save_path+'/mr_original.nrrd', mri_data_1)
+# # nrrd.write(save_path+'/divtest_0001_uint.nrrd', mri_data_1)
 
 
 # --------------- for testing .npy files ----------------
-# epoch_nums = [40, 80, 120, 160, 200]
-epoch_nums = [70, 80, 90, 100]
-epch = epoch_nums[3]
+epoch_nums = [30, 80, 120, 180, 250]
+# epoch_nums = [70, 80, 90, 100]
+epch = epoch_nums[0]
 # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/mr2ct_spectral' \
 #             '/realA2fakeB/epoch_' + str(epch) + '/'
+# load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
+#             'mr2ct_unet_gradcon_exp1/realA2fakeB/epoch_' + str(epch) + '/'
 load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
-            'mr2ct_new_unetUpdated/realA2fakeB/epoch_' + str(epch) + '/'
-# load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct/test_diverse/A/'
+            'mr2ct_v1_lighterUnet_gradientConsistency_batchSize4/realA2fakeB/epoch_' + str(epch) + '/'
 path = load_path + '*.npy'
 files = sorted(glob.glob(path))
 
 # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/' \
 #             'mr2ct_unet_gradient_consistency/diverse_epoch_' + str(epch)
 # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_unet/diverse_epoch_'+str(epch)
-save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_new_unetUpdated/epoch_'+str(epch)
+save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/' \
+            'mr2ct_v1_lighterUnet_gradientConsistency_batchSize4/epoch_' +str(epch)
+# save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/new_test_data/'
 if not os.path.exists(save_path):
     os.mkdir(save_path)
 
+# print(np.load(files[0]).shape)
+# sys.exit()
 for file_name in files:
     temp = file_name.split('/')
     name = temp[-1][:-4]
     mri_data = np.load(file_name).squeeze(0)  # loaded as: 48x256x128
     mri_data_1 = np.transpose(mri_data, (0, 2, 1))
+    # mri_data = np.load(file_name)  # loaded as: 256x128x48
+    # mri_data_1 = np.transpose(mri_data, (2, 1, 0))
+
     # bringing it in 0-255 range
     # mri_data_1 = (255*((mri_data_1+1)/2.0)).astype(np.uint8)  # first bringing it into 0-1 range and multiply by 255
-    # nrrd.write(save_path+'/grad_con.nrrd', mri_data_1)
-    nrrd.write(save_path + '/test_newUpdated_' + name + '.nrrd', mri_data_1)
+
+    # nrrd.write(save_path+'/gradcon_exp1_new_data_' + name + '.nrrd', mri_data_1)
+    nrrd.write(save_path + '/test_ep30_' + name + '.nrrd', mri_data_1)
 
 # -------------------------------------------------------------------------
 # shape of the original 3D matrix MRI - (217, 123, 104)

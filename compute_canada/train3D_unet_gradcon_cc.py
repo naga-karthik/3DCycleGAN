@@ -17,20 +17,21 @@ from datasets3D_cc import ImageDataset
 from losses_cc import gradient_consistency_loss
 from utils3D_cc import Logger, LambdaLR, ReplayBuffer, weights_init_normal
 # from models3D_SN_cc import UnetGenerator3DwithSpectralNorm, PatchGANDiscriminatorwithSpectralNorm
-from models3D_updated_SN_cc import UnetGenerator3DUpdated, PatchGANDiscriminatorwithSpectralNorm
+# from models3D_updated_SN_cc import UnetGenerator3DUpdated, PatchGANDiscriminatorwithSpectralNorm
+from models3D_new_cc import ModifiedResUnetGenerator3D, PatchGANDiscriminatorwithSpectralNorm
 
 path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/datasets/'
 
 save_path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_models/' \
-            'mr2ct_new_unetUp_gradient_consistency'
+            'mr2ct_new_modifiedUnet_gradient_consistency'
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 # paths for saving the images generated during training
 traingen_path_A2B = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_new_unetUp_gradient_consistency/realA2fakeB'
+                    '/mr2ct_new_modifiedUnet_gradient_consistency/realA2fakeB'
 traingen_path_B2A = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_new_unetUp_gradient_consistency/realB2fakeA'
+                    '/mr2ct_new_modifiedUnet_gradient_consistency/realB2fakeA'
 if not os.path.exists(traingen_path_A2B):
     os.makedirs(traingen_path_A2B)
 if not os.path.exists(traingen_path_B2A):
@@ -57,10 +58,8 @@ print(args)
 # THE NETWORKS
 # netG_A2B = UnetGenerator3DwithSpectralNorm(args.input_nc, args.output_nc)
 # netG_B2A = UnetGenerator3DwithSpectralNorm(args.output_nc, args.input_nc)
-# netG_A2B = ResnetGenerator3DwithSpectralNorm(args.input_nc, args.output_nc, num_residual_blocks=9)
-# netG_B2A = ResnetGenerator3DwithSpectralNorm(args.output_nc, args.input_nc, num_residual_blocks=9)
-netG_A2B = UnetGenerator3DUpdated(args.input_nc, args.output_nc)
-netG_B2A = UnetGenerator3DUpdated(args.output_nc, args.input_nc)
+netG_A2B = ModifiedResUnetGenerator3D(args.input_nc, args.output_nc)
+netG_B2A = ModifiedResUnetGenerator3D(args.output_nc, args.input_nc)
 netD_A = PatchGANDiscriminatorwithSpectralNorm(args.input_nc)
 netD_B = PatchGANDiscriminatorwithSpectralNorm(args.output_nc)
 
@@ -215,7 +214,7 @@ for epoch in range(args.epoch, args.n_epochs+1):
         ################################
 
         # saving the generated images for every 100th image in a batch
-        if (i+1) % 600 == 0:
+        if (i+1) % 300 == 0:
             j += 1
             tempB = fake_B[0].cpu().double().numpy()
             # print(tempB.shape, tempB.dtype, fake_B[0].shape)
