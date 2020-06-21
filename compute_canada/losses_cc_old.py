@@ -11,37 +11,37 @@ from skimage.filters import sobel_h, sobel_v
 
 
 def gradient_consistency_loss(real_img, fake_img):
-    real_img = real_img.cpu().detach().numpy().squeeze()
-    fake_img = fake_img.cpu().detach().numpy().squeeze()
-    # print("After 1st squeeze: ", real_img.shape)
-    mean_loss_gc = []
+    real_img = real_img.cpu().detach().numpy()
+    fake_img = fake_img.cpu().detach().numpy()
+    gradx_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=0))  # axis=0 is the x-axis
+    gradx_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=0))
+    ncc_x = normalized_cross_correlation(gradx_img_a, gradx_img_b)
 
-    for i in range(real_img.shape[0]):
+    grady_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=1))  # axis=1 is the y-axis
+    grady_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=1))
+    ncc_y = normalized_cross_correlation(grady_img_a, grady_img_b)
 
-        if len(real_img.shape) != 3:
-            real_img = real_img[i].squeeze()
-            fake_img = fake_img[i].squeeze()
-        # print("after 2nd squeeze: ", real_img.shape)
+    gradz_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=2))  # axis=2 is the z-axis
+    gradz_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=2))
+    ncc_z = normalized_cross_correlation(gradz_img_a, gradz_img_b)
 
-        gradx_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=0))  # axis=0 is the x-axis
-        gradx_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=0))
-        ncc_x = normalized_cross_correlation(gradx_img_a, gradx_img_b)
+    grad_corr_ab = 0.5 * (ncc_x + ncc_y + ncc_z)
+    result = (1.0 - grad_corr_ab)
 
-        grady_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=1))  # axis=1 is the y-axis
-        grady_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=1))
-        ncc_y = normalized_cross_correlation(grady_img_a, grady_img_b)
+    # -- For testing with a few images, whether ndimage.sobel and skimage.filters.sobel are the same.---
+    # tempx = ndimage.sobel(real_img, axis=0)
+    # plt.figure(); plt.imshow(real_img[20, :, :], cmap='gray'); plt.show()
+    # plt.figure(); plt.imshow(tempx[20, :, :], cmap='gray'); plt.show()
 
-        gradz_img_a = torch.FloatTensor(ndimage.sobel(real_img, axis=2))  # axis=2 is the z-axis
-        gradz_img_b = torch.FloatTensor(ndimage.sobel(fake_img, axis=2))
-        ncc_z = normalized_cross_correlation(gradz_img_a, gradz_img_b)
+    # tempy = ndimage.sobel(real_img, axis=1)
+    # tempy1 = ndimage.sobel(fake_img, axis=1)
+    # plt.figure(); plt.imshow(tempy[20, :, :], cmap='gray'); plt.show()
+    # plt.figure(); plt.imshow(tempy1[20, :, :], cmap='gray'); plt.show()
 
-        grad_corr_ab = 0.5 * (ncc_x + ncc_y + ncc_z)
-        result = (1.0 - grad_corr_ab)
-        mean_loss_gc.append(result)
-   
-    # print(len(mean_loss_gc))
-    # print(torch.mean(torch.FloatTensor(mean_loss_gc)))
-    return torch.mean(torch.FloatTensor(mean_loss_gc))
+    # tempz = ndimage.sobel(real_img, axis=2)
+    # plt.figure(); plt.imshow(tempz[20, :, :], cmap='gray'); plt.show()
+
+    return torch.mean(result)
 
 
 def normalized_cross_correlation(img_a, img_b):
@@ -59,39 +59,36 @@ def normalized_cross_correlation(img_a, img_b):
 
 # ------------ Normalized Mutual Information (NMI) Calculation -------------
 def normalized_mutual_info_loss(real_img, fake_img):
-    # print("before 1st squeeze: ", real_img.shape)
     real_img = real_img.cpu().detach().numpy().squeeze()
     fake_img = fake_img.cpu().detach().numpy().squeeze()
-    # print("after 1st squeeze: ", real_img.shape)
     mean_loss_nmi = []
 
     for i in range(real_img.shape[0]):
         axial_mutual_info, coronal_mutual_info, sagittal_mutual_info = [], [], []
-        
-        if len(real_img.shape) != 3:
-            real_img = real_img[i].squeeze()
-            fake_img = fake_img[i].squeeze()
-        # print("after 2nd squeeze: ", real_img.shape)
+
+        real_img = real_img[i].squeeze()
+        fake_img = fake_img[i].squeeze()
+        print(real_img.shape)
 
         for idx in range(real_img.shape[0]):
-            temp_mri_sag = real_img[idx, :, :]
-            temp_ct_sag = fake_img[idx, :, :]
+            temp_mri_sag = real_img[idx, :, :].transpose(0, 1)
+            temp_ct_sag = fake_img[idx, :, :].transpose(0, 1)
 
             # Using the already available method for mutual info 2D
             mi_sag = 1.0 - mutual_information_2d(temp_mri_sag.ravel(), temp_ct_sag.ravel(), normalized=True)
             sagittal_mutual_info.append(mi_sag)
 
         for idx in range(real_img.shape[1]):
-            temp_mri_ax = real_img[:, idx, :]
-            temp_ct_ax = fake_img[:, idx, :]
+            temp_mri_ax = real_img[:, idx, :].transpose(1, 0)
+            temp_ct_ax = fake_img[:, idx, :].transpose(1, 0)
 
             # Using the already available method for mutual info 2D
             mi_ax = 1.0 - mutual_information_2d(temp_mri_ax.ravel(), temp_ct_ax.ravel(), normalized=True)
             axial_mutual_info.append(mi_ax)
 
         for idx in range(real_img.shape[2]):
-            temp_mri_cor = real_img[:, :, idx]
-            temp_ct_cor = fake_img[:, :, idx]
+            temp_mri_cor = real_img[:, :, idx].transpose(1, 0)
+            temp_ct_cor = fake_img[:, :, idx].transpose(1, 0)
 
             # Using the already available method for mutual info 2D
             mi_cor = 1.0 - mutual_information_2d(temp_mri_cor.ravel(), temp_ct_cor.ravel(), normalized=True)
@@ -99,10 +96,8 @@ def normalized_mutual_info_loss(real_img, fake_img):
 
         loss_nmi = np.mean(sagittal_mutual_info) + np.mean(axial_mutual_info) + np.mean(coronal_mutual_info)
         mean_loss_nmi.append(loss_nmi)
-    
-    # print(np.mean(mean_loss_nmi))
-    result = torch.mean(torch.from_numpy(np.array(mean_loss_nmi)).float())
-    return result
+
+    return torch.FloatTensor(np.mean(mean_loss_nmi))
 
 
 def mutual_information_2d(x, y, sigma=1, normalized=False):
@@ -121,8 +116,7 @@ def mutual_information_2d(x, y, sigma=1, normalized=False):
     nmi: float
         the computed similariy measure
     """
-    # bins = (256, 256)
-    bins = (64, 64)
+    bins = (256, 256)
     jh = np.histogram2d(x, y, bins=bins)[0]
 
     # smooth the jh with a gaussian filter of given sigma
