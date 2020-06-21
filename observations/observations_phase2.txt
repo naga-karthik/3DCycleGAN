@@ -14,22 +14,45 @@ Experiments to run:
 2) CycleGAN3D with perceptual loss and the remaining standard losses. (works only on Cedar's GPUs because it consumes about 30GB memory on both GPUs)
 
 
-15/06/20 - CHANGELOG (new observations/remarks)
+--------------------	15/06/20 - CHANGELOG (new observations/remarks) ---------------------
 
 Experiments from PREVIOUS To-Do: 
-(1) Ran the vanilla CycleGAN for 250 epochs, results not all good. One possibility - discriminator too strong and generator too weak (revamped the entire generator architecture and reduced the discriminator's capacity in the new experiments)
-(2) CycleGAND3D with Perceptual losses only runs when the data is divided into patches. The result for this experiment was also not good at all. Possibility - Non-overlapping are kind of disjoint so the model cannot figure what the images look like at the borders of each patch. This was trained 
+(1) Ran the vanilla CycleGAN for 250 epochs, results not at all good. One possibility - discriminator too strong and generator too weak (revamped the entire generator architecture and reduced the discriminator's capacity in the new experiments)
+(2) CycleGAN3D with Perceptual loss only runs when the data is divided into patches. The result for this experiment was also not good at all. Possibility - Non-overlapping are kind of disjoint so the model cannot figure what the images look like at the borders of each patch. This was trained 
 for 150 epochs, with no decent results
 
 New additions:
 (1) Changed the UnetGenerator's architecture completely. The original volume is downsampled 16 times at the bottle neck. The convolution blocks now have a sequence of 2 convolutions (unlike in the previous with only 1 conv layer)
 (2) 2 models were created: LighterUnetGenerator3D and LighterResUnetGenerator3D (this contains skip connections). One thing is unclear as to why despite having skip connections the model training time did not witness an observable speed-up.
-*(3) Crucial yet lucky observation: When using DDP, saving models should be done in such a way that all the processes do not save at the same local rank (thereby overwriting the master processes' saved data). This caused a "serialization" error which meant that the saved data was corrupted and cannot be retrived. SOLUTION: Make sure that the only the master process saved the model thereby preventing any overwriting.
+*(3) Crucial yet lucky observation: When using DDP, saving models should be done in such a way that all the processes do not save at the same local rank (thereby overwriting the master processes' saved data). This caused a "serialization" error which meant that the saved data was corrupted and cannot be retrived. SOLUTION: Make sure that the only the master process saves the model thereby preventing any overwriting.
 **(4) Note that when running models parallely, the batch size should be greater than or equal to (>=) the number of GPUs being used. That way, it is more efficient.
 
 Ongoing Experiments:
 (1) LighterUnetGenerator with Gradient Consistency loss. On reducing the number of channels at each layer by 2, the batch size could be increased to 4, thus making it possible to run parallely with 4 GPUs.
  
+
+---------------- 	21/06/20 - CHANGELOG (new updates/observations/remarks) ----------------
+
+Experiment from previous To-Do:
+(1) LighterUnetGenerator with Gradient Consistency loss could run only for 192 epochs. Nevertheless, the diversity problem appears to be solved after changing the entire architecture. All generated volumes are different in some or the other way (and can be easily paired with their corresponding inputs). However, a problem was discovered.
+
+New Additions:
+(1) The problem with the previous iteration is that the gradient images were calculated for the wrong axis. The input to the N-dimensional Sobel operator was [4,1,48,256,128] and the sobel operator was used on axes 0, 1 and 2 (assuming that the input is 3D). This has been rectified by running a for loop for all the 4 volumes in one batch and squeezing the single dimension.
+(2) Mutual information is a widely-used metric for medical image registration, the same concept is used in an updated loss function. The normalized mutual info (NMI) is calculated b/w real and fake images. Since maximizing NMI is same as minimizing (1 - NMI), the NMI loss is calculated the same idea. Again, a for loop is run for all 4 volumes in a batch and 3 separate for loops for slice-by-slice NMI calculation. 
+
+Ongoing Experiments:
+(1) LighterUnet with updated Gradient Consistency - approx. 5 days
+(1) LighterUnet with Normalized Mutual Information loss - approx. 6 days
+
+
+
+
+
+
+
+
+
+
 
 
 
