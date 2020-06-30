@@ -45,6 +45,20 @@ Ongoing Experiments:
 (1) LighterUnet with Normalized Mutual Information loss - approx. 6 days
 
 
+---------------- 	30/06/20 - CHANGELOG (new updates/observations/remarks) ----------------
+Results from previous To-Do:
+1) LighterUnet with updated gradient consistency loss (the correct one where the axes for calculating the gradient are correct) completed for 200 epochs
+2) LighterUnet with NMI loss completed for 200 epochs
+
+Observations:
+1) The results from NMI loss are not as good as expected. The loss value never actually reduced, only oscillated around 5. 
+2) The updated gradient consistency gave good results as expected. Volume segmentations have been for a few volumes based on the results obtained from this experiment only
+3) A weird problem of Out of Memory error occured when the saved_models were loaded because the training was stopped abruptly. This could be solved by loading the models on the CPU first and then transferring them to the GPU.
+
+There are no ongoing experiments as of now. Work is being done only in segmenting volumes and writing the paper.
+
+
+
 
 
 
