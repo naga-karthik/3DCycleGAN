@@ -27,15 +27,15 @@ from models3D_lighter_cc import LighterUnetGenerator3D, PatchGANDiscriminatorwit
 path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/datasets/'
 
 save_path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_models/' \
-            'mr2ct_lighterUnet_plain_batchSize4'
+            'mr2ct_lighterUnet_basic_batchSize4'
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 # paths for saving the images generated during training
 traingen_path_A2B = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_lighterUnet_plain_batchSize4/realA2fakeB'
+                    '/mr2ct_lighterUnet_basic_batchSize4/realA2fakeB'
 traingen_path_B2A = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_lighterUnet_plain_batchSize4/realB2fakeA'
+                    '/mr2ct_lighterUnet_basic_batchSize4/realB2fakeA'
 if not os.path.exists(traingen_path_A2B):
     os.makedirs(traingen_path_A2B)
 if not os.path.exists(traingen_path_B2A):
@@ -64,8 +64,6 @@ def train_model(rank, args):
     torch.cuda.set_device(rank)
 
     # THE NETWORKS
-    # netG_A2B = UnetGenerator3DwithSpectralNorm(args.input_nc, args.output_nc)
-    # netG_B2A = UnetGenerator3DwithSpectralNorm(args.output_nc, args.input_nc)
     # netG_A2B = ModifiedResUnetGenerator3D(args.input_nc, args.output_nc, init_featMaps=16).to(rank)
     # netG_B2A = ModifiedResUnetGenerator3D(args.output_nc, args.input_nc, init_featMaps=16).to(rank)
     netG_A2B = LighterUnetGenerator3D(args.input_nc, args.output_nc, num_feat_maps=[20, 40, 80, 160]).to(rank)
