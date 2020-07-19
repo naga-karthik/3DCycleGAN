@@ -1,0 +1,51 @@
+A file for recording observations in PHASE-3 of experimentation with cycleGAN3D.
+
+Major Changes:
+1) CT DATASET:
+The dataset has been completely revamped. A public dataset of CT spines is used (Link here: https://biomedia.doc.ic.ac.uk/data/spine/). Not much description of the dataset is provided except from the fact that it is acquired at the University of Washington. 
+
+Citation for the dataset:
+B. Glocker, D. Zikic, E. Konukoglu, D.R. Haynor, A. Criminisi
+Vertebrae Localization in Pathological Spine CT via Dense Classification from Sparse Annotations
+International Conference on Medical Image Computing and Computer Assisted Intervention (MICCAI), Nagoya, Japan, September 2013
+
+New CT data -> 90 volumes
+Already present data -> 3 volumes (actually 4, 2 were copies of each other)
+Total raw CT data -> 93 volumes
+Augmentation methods used: 3 rotations + 3 noise injections + 4 elastic deformations PER CT volume. Therefore, 10 augmented volumes + 1 orignal volume
+Therefore, total CT volumes -> 93 * 11 = 1023 volumes 
+Note: Since CT is not being tested, the 3 of the training volumes are randomly put in the test folder just for the namesake.
+
+Here, 2 additional datasets are created. Both have the same CT data but the MRI data is changed. This is to see whether the model is able to learn to translate without see the scoliotic spines. 
+
+2.1) MRI DATASET (WITH Scoliotic):
+Ground Truth data is avaible for Scoliotic Patient folders: 1, 11 and 12
+Therefore, these are used in the test data. Note: This time only the '160' folder is used. The '23' folder is not used, it caused more confusion unnecessarily.
+Original Raw MRI volumes at hand -> 16 MICCAI volumes + 11 Scoliotic Volumes
+Volumes used for TESTING -> 5 volumes (2 from MICCAI-05, 07 AND 3 from Scoliotic-Patients 1, 11 and 12.
+Remaining Raw volumes used for training -> 22 volumes
+Augmentation methods used -> 10 rotations + 10 noise injections + 10 elastic deformations PER volume. Therefore, 30 augmented volumes + 1 original
+Therefore, total MR volumes -> 22 * 31 = 682 volumes
+
+
+2.2) MRI DATASET (WITHOUT Scoliotic):
+Ground Truth data is avaible for Scoliotic Patient folders: 1, 11 and 12
+Original Raw MRI volumes at hand -> 16 MICCAI volumes + 11 Scoliotic Volumes
+Volumes used for TESTING -> ALL 11 Scoliotic volumes 
+Remaining Raw volumes used for training -> 16 (MICCAI) volumes
+Augmentation methods used -> 10 rotations + 10 noise injections + 10 elastic deformations PER volume. Therefore, 30 augmented volumes + 1 original
+Therefore, total MR volumes -> 16 * 31 = 496 volumes
+
+
+CODE:
+The code is exactly the same. Only the default settings from the last working model are re-used. 
+
+Ongoing Experiments:
+1)
+
+
+
+
+
+
+
