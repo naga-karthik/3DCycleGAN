@@ -19,24 +19,23 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 sys.path.insert(0, '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/code_scripts')
 
 from datasets3D_cc import ImageDataset
-from losses_cc import gradient_consistency_loss
+# from losses_cc import gradient_consistency_loss
 from utils3D_cc import Logger, LambdaLR, ReplayBuffer, weights_init_normal
-# from models3D_SN_cc import UnetGenerator3DwithSpectralNorm, PatchGANDiscriminatorwithSpectralNorm
-# from models3D_updated_SN_cc import UnetGenerator3DUpdated, PatchGANDiscriminatorwithSpectralNorm
-from models3D_new_cc import ModifiedResUnetGenerator3D, PatchGANDiscriminatorwithSpectralNorm
+# from models3D_new_cc import ModifiedResUnetGenerator3D, PatchGANDiscriminatorwithSpectralNorm
+from models3D_lighter_cc import LighterUnetGenerator3D, PatchGANDiscriminatorwithSpectralNorm
 
 path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/datasets/'
 
 save_path = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_models/' \
-            'mr2ct_new_modifiedUnet_gradient_consistency'
+            'mr2ct_lighterUnet_plain_batchSize4'
 if not os.path.exists(save_path):
     os.makedirs(save_path)
 
 # paths for saving the images generated during training
 traingen_path_A2B = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_new_modifiedUnet_gradient_consistency/realA2fakeB'
+                    '/mr2ct_lighterUnet_plain_batchSize4/realA2fakeB'
 traingen_path_B2A = '/home/karthik7/projects/def-laporte1/karthik7/cycleGAN3D/saved_images/training_generated' \
-                    '/mr2ct_new_modifiedUnet_gradient_consistency/realB2fakeA'
+                    '/mr2ct_lighterUnet_plain_batchSize4/realB2fakeA'
 if not os.path.exists(traingen_path_A2B):
     os.makedirs(traingen_path_A2B)
 if not os.path.exists(traingen_path_B2A):
@@ -67,8 +66,10 @@ def train_model(rank, args):
     # THE NETWORKS
     # netG_A2B = UnetGenerator3DwithSpectralNorm(args.input_nc, args.output_nc)
     # netG_B2A = UnetGenerator3DwithSpectralNorm(args.output_nc, args.input_nc)
-    netG_A2B = ModifiedResUnetGenerator3D(args.input_nc, args.output_nc).to(rank)
-    netG_B2A = ModifiedResUnetGenerator3D(args.output_nc, args.input_nc).to(rank)
+    # netG_A2B = ModifiedResUnetGenerator3D(args.input_nc, args.output_nc, init_featMaps=16).to(rank)
+    # netG_B2A = ModifiedResUnetGenerator3D(args.output_nc, args.input_nc, init_featMaps=16).to(rank)
+    netG_A2B = LighterUnetGenerator3D(args.input_nc, args.output_nc, num_feat_maps=[20, 40, 80, 160]).to(rank)
+    netG_B2A = LighterUnetGenerator3D(args.output_nc, args.input_nc, num_feat_maps=[20, 40, 80, 160]).to(rank)
     netD_A = PatchGANDiscriminatorwithSpectralNorm(args.input_nc).to(rank)
     netD_B = PatchGANDiscriminatorwithSpectralNorm(args.output_nc).to(rank)
 
@@ -81,10 +82,15 @@ def train_model(rank, args):
     if args.epoch != 1:  # in this case, go to the folder to see at which epoch training stopped and run the model again
                          # by specifying --epoch='the-last-epoch'
         # load saved models
-        netG_A2B.load_state_dict(torch.load(save_path+"/netG_A2B_%d.pth" % (args.epoch)))
-        netG_B2A.load_state_dict(torch.load(save_path+"/netG_B2A_%d.pth" % (args.epoch)))
-        netD_A.load_state_dict(torch.load(save_path+"/netD_A_%d.pth" % (args.epoch)))
-        netD_B.load_state_dict(torch.load(save_path+"/netD_B_%d.pth" % (args.epoch)))
+        netG_A2B.load_state_dict(torch.load(save_path+"/netG_A2B_%d.pth" % (args.epoch), map_location='cpu'))
+        netG_B2A.load_state_dict(torch.load(save_path+"/netG_B2A_%d.pth" % (args.epoch), map_location='cpu'))
+        netD_A.load_state_dict(torch.load(save_path+"/netD_A_%d.pth" % (args.epoch), map_location='cpu'))
+        netD_B.load_state_dict(torch.load(save_path+"/netD_B_%d.pth" % (args.epoch), map_location='cpu'))
+
+        netG_A2B.to(rank)
+        netG_B2A.to(rank)
+        netD_A.to(rank)
+        netD_B.to(rank)
     else:
         # initializing with proper weights
         netG_A2B.apply(weights_init_normal)
@@ -95,7 +101,6 @@ def train_model(rank, args):
     # THE LOSSES
     criterion_GAN = nn.MSELoss().to(rank)
     criterion_cycle = nn.L1Loss().to(rank)
-    # criterion_identity = nn.L1Loss() # without this, the generator tends to change the "tint" of the output images.
 
     # THE OPTIMIZERS AND LEARNING RATE SCHEDULERS
     optimizer_G = optim.Adam(itertools.chain(netG_A2B.parameters(), netG_B2A.parameters()), lr=args.lr, betas=(0.5, 0.999))
@@ -160,12 +165,12 @@ def train_model(rank, args):
 
             loss_cycle_consistency = 10.0 * (loss_cycle_A2B2A + loss_cycle_B2A2B)
 
-            # GRADIENT-CONSISTENCY LOSS
-            # because synthesized CT is already calculated above (fake_B), the same is reused. Similarly for synthesized MR.
-            loss_gc_A = 0.5 * gradient_consistency_loss(real_img=real_A, fake_img=fake_B)
-            loss_gc_B = 0.5 * gradient_consistency_loss(real_img=real_B, fake_img=fake_A)
-
-            loss_gradient_consistency = 1.0 * (loss_gc_A + loss_gc_B)   # 0.3 is the lambda_gc value in paper
+            # # GRADIENT-CONSISTENCY LOSS
+            # # because synthesized CT is already calculated above (fake_B), the same is reused. Similarly for synthesized MR.
+            # loss_gc_A = 0.5 * gradient_consistency_loss(real_img=real_A, fake_img=fake_B)
+            # loss_gc_B = 0.5 * gradient_consistency_loss(real_img=real_B, fake_img=fake_A)
+            #
+            # loss_gradient_consistency = 1.0 * (loss_gc_A + loss_gc_B)   # 0.3 is the lambda_gc value in paper
 
             # # IDENTITY LOSS Identity loss in the paper is defined like this: lambda_identity * (||G_A(B) - B|| * lambda_B
             # # + ||G_B(A) - A|| * lambda_A) -> Here: ||netG_A2B(B) - B||*(10*0.5) + ||netG_B2A(A) - A||*(10*0.5)
@@ -177,7 +182,7 @@ def train_model(rank, args):
 
             # COMBINING ALL LOSSES FOR THE GENERATOR NOW
             # loss_G = loss_GAN_A2B + loss_GAN_B2A + loss_cycle_A2B2A + loss_cycle_B2A2B + loss_identity_A + loss_identity_B
-            loss_G = adversarial_loss + loss_cycle_consistency + loss_gradient_consistency
+            loss_G = adversarial_loss + loss_cycle_consistency # + loss_gradient_consistency
             loss_G.backward()
 
             optimizer_G.step()
@@ -219,7 +224,7 @@ def train_model(rank, args):
             ################################
 
             # saving the generated images for every 100th image in a batch
-            if (i+1) % 150 == 0:
+            if (i+1) % 300 == 0:
                 j += 1
                 tempB = fake_B[0].cpu().float().numpy()
                 # print(tempB.shape, tempB.dtype, fake_B[0].shape)
@@ -233,11 +238,12 @@ def train_model(rank, args):
                 # imageio.imsave(traingen_path_B2A +'/%04d.png' % j, tempA.transpose(1,2,0))
 
             # Show progess on Terminal
-            logger.log(save_path, {'G Adversarial Loss': adversarial_loss,
-                                   'G Cycle-Consistency Loss': loss_cycle_consistency,
-                                   'G Gradient-Consistency Loss': loss_gradient_consistency,
-                                   'G Loss': loss_G,
-                                   'D Loss': (loss_D_A + loss_D_B)})
+            if rank == 0:
+                logger.log(save_path, {'G Adversarial Loss': adversarial_loss,
+                                       'G Cycle-Consistency Loss': loss_cycle_consistency,
+                                       # 'G Gradient-Consistency Loss': loss_gradient_consistency,
+                                       'G Loss': loss_G,
+                                       'D Loss': (loss_D_A + loss_D_B)})
 
         # UPDATE LEARNING RATES
         lr_scheduler_G.step()
@@ -245,7 +251,7 @@ def train_model(rank, args):
         lr_scheduler_D_B.step()
 
         # SAVE MODELS (at the end of every epoch)
-        if (epoch+1) % 10 == 0:
+        if (rank == 0 and (epoch+1) % 10 == 0):
             torch.save(netG_A2B.state_dict(), save_path+"/netG_A2B_%d.pth" % (epoch+1))
             torch.save(netG_B2A.state_dict(), save_path+"/netG_B2A_%d.pth" % (epoch+1))
             torch.save(netD_A.state_dict(), save_path+"/netD_A_%d.pth" % (epoch+1))
@@ -260,7 +266,7 @@ def run_train_model(train_func, world_size):
 
     parser.add_argument('--epoch', type=int, default=1, help='starting epoch')
     parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs for training')
-    parser.add_argument('--batch_size', type=int, default=2, help='size of the batches')
+    parser.add_argument('--batch_size', type=int, default=4, help='size of the batches')
     parser.add_argument('--dataroot', type=str, default=path + 'mr2ct_new/', help='root directory of the dataset')
     parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate')
     parser.add_argument('--decay_epoch', type=int, default=100,
