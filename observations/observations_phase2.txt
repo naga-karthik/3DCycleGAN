@@ -58,6 +58,13 @@ Observations:
 There are no ongoing experiments as of now. Work is being done only in segmenting volumes and writing the paper.
 
 
+---------------- 	06/07/20 - CHANGELOG (new updates/observations/remarks) ----------------
+Currently running experiments:
+1) In order to have a baseline model for comparison, 3D CycleGAN with no additional losses is run. It has only two losses: adversarial and cycle consistency losses. Approximate completion time - 3 days
+
+Observations/Ideas:
+Since Hiasa et al. used MI as a metric to compare the real and synthesized images, an idea here was to use the same concept for calculating MI for each volume (slice wise). The results may not be as good as when the model was only trained using 2D slices. But, it is nevertheless another metric to show. 
+
 
 
 
