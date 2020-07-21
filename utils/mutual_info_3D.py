@@ -10,10 +10,10 @@ from scipy import ndimage
 
 plt.rcParams['image.interpolation'] = 'nearest'
 
-source_file_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/normalized_patient4_160.npy'
-target_file_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/' \
-                   'testing_generated/mr2ct_spectral/realA2fakeB/0001.npy'
-# dataset_name = 'summer2winter_yosemite'
+source_file_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_new/test/A/' \
+                   'normalized_patient5_23.npy'
+target_file_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
+                   'mr2ct_v3_lighterUnet_gradientConsistency_batchSize4/realA2fakeB/epoch_200/0012.npy'
 
 # real_images_list = sorted(glob.glob(os.path.join(source_folder_path, dataset_name, mode, domain_a) + '/*.*'))
 # fake_images_list = sorted(glob.glob(os.path.join(target_folder_path, dataset_name, domain_b) + '/*.*'))
@@ -24,6 +24,10 @@ print(fake_ct.shape)
 if len(fake_ct.shape) != 3:
     fake_ct = fake_ct.squeeze()
 print(fake_ct.shape)
+
+# # plotting to check whether the slices match superficially at least
+# plt.figure(); plt.imshow(real_mri[:, 100, :], cmap='gray'); plt.show()
+# plt.figure(); plt.imshow(fake_ct[:, 100, :], cmap='gray'); plt.show()
 # sys.exit()
 
 # axial_mri, coronal_mri, sagittal_mri = [], [], []
@@ -63,16 +67,12 @@ def mutual_information_2d(x, y, sigma=1, normalized=False):
     joint histogram.
     Parameters
     ----------
-    x : 1D array
-        first variable
-    y : 1D array
-        second variable
-    sigma: float
-        sigma for Gaussian smoothing of the joint histogram
+    x : 1D array (first variable)
+    y : 1D array (second variable)
+    sigma: float (sigma for Gaussian smoothing of the joint histogram)
     Returns
     -------
-    nmi: float
-        the computed similariy measure
+    nmi: float (the computed similarity measure)
     """
     bins = (256, 256)
 
@@ -159,32 +159,42 @@ if __name__ == '__main__':
     axial_mutual_info, coronal_mutual_info, sagittal_mutual_info = [], [], []
 
     for idx in range(real_mri.shape[0]):
-        temp_mri_sag = real_mri[idx, :, :].transpose(0, 1)
-        temp_ct_sag = fake_ct[idx, :, :].transpose(0, 1)
+        temp_mri_sag = real_mri[idx, :, :] #.transpose(0, 1)
+        temp_ct_sag = fake_ct[idx, :, :] #.transpose(0, 1)
 
         # Using the already available method for mutual info 2D
-        mi_sag = 1.0 - mutual_information_2d(temp_mri_sag.ravel(), temp_ct_sag.ravel(), normalized=True)
+        # 1.0 - nmi is only used when we want to calculate loss and require gradient information
+        # mi_sag = 1.0 - mutual_information_2d(temp_mri_sag.ravel(), temp_ct_sag.ravel(), normalized=True)
+        # mi_sag = mutual_information_2d(temp_mri_sag.ravel(), temp_ct_sag.ravel(), normalized=True)
+        # just mutual information
+        mi_sag = mutual_information_2d(temp_mri_sag.ravel(), temp_ct_sag.ravel())
         sagittal_mutual_info.append(mi_sag)
 
     for idx in range(real_mri.shape[1]):
-        temp_mri_ax = real_mri[:, idx, :].transpose(1, 0)
-        temp_ct_ax = fake_ct[:, idx, :].transpose(1, 0)
+        temp_mri_ax = real_mri[:, idx, :] #.transpose(1, 0)
+        temp_ct_ax = fake_ct[:, idx, :] #.transpose(1, 0)
 
         # Using the already available method for mutual info 2D
-        mi_ax = 1.0 - mutual_information_2d(temp_mri_ax.ravel(), temp_ct_ax.ravel(), normalized=True)
+        # mi_ax = 1.0 - mutual_information_2d(temp_mri_ax.ravel(), temp_ct_ax.ravel(), normalized=True)
+        # mi_ax = mutual_information_2d(temp_mri_ax.ravel(), temp_ct_ax.ravel(), normalized=True)
+        # just mutual information
+        mi_ax = mutual_information_2d(temp_mri_ax.ravel(), temp_ct_ax.ravel())
         axial_mutual_info.append(mi_ax)
 
     for idx in range(real_mri.shape[2]):
-        temp_mri_cor = real_mri[:, :, idx].transpose(1, 0)
-        temp_ct_cor = fake_ct[:, :, idx].transpose(1, 0)
+        temp_mri_cor = real_mri[:, :, idx] #.transpose(1, 0)
+        temp_ct_cor = fake_ct[:, :, idx] #.transpose(1, 0)
 
         # Using the already available method for mutual info 2D
-        mi_cor = 1.0 - mutual_information_2d(temp_mri_cor.ravel(), temp_ct_cor.ravel(), normalized=True)
+        # mi_cor = 1.0 - mutual_information_2d(temp_mri_cor.ravel(), temp_ct_cor.ravel(), normalized=True)
+        # mi_cor = mutual_information_2d(temp_mri_cor.ravel(), temp_ct_cor.ravel(), normalized=True)
+        # just mutual information
+        mi_cor = mutual_information_2d(temp_mri_cor.ravel(), temp_ct_cor.ravel())
         coronal_mutual_info.append(mi_cor)
 
     print("Mean Sagittal MI score: %.4f" % (np.mean(sagittal_mutual_info)))
     print("Mean Axial MI score: %.4f" % (np.mean(axial_mutual_info)))
     print("Mean Coronal MI score: %.4f" % (np.mean(coronal_mutual_info)))
 
-    loss_nmi = np.mean(sagittal_mutual_info) + np.mean(axial_mutual_info) + np.mean(coronal_mutual_info)
-    print("NMI Loss: %.4f" % loss_nmi)
+    # loss_nmi = np.mean(sagittal_mutual_info) + np.mean(axial_mutual_info) + np.mean(coronal_mutual_info)
+    # print("NMI Loss: %.4f" % loss_nmi)

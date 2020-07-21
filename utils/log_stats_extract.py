@@ -8,7 +8,7 @@ import numpy as np
 path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/utils/'
 
 lines = []
-with open(path+'log_stats_v1.txt', 'rt') as file:
+with open(path+'log_stats.txt', 'rt') as file:
     for line in file:
         lines.append(line)
 

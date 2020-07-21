@@ -64,13 +64,47 @@ import glob
 # # print(mri_data_norm01.min(), mri_data_norm01.max())
 
 # ------------- CT Data conversion -----------
-path_ct = '/home/karthik/PycharmProjects/DLwithPyTorch/3DcycleGAN/datasets/CT/anon_crpd.nrrd'
-ct_data, header1 = nrrd.read(path_ct, index_order='C')
-print(ct_data.shape)
+# path_ct = '/home/karthik/PycharmProjects/DLwithPyTorch/3DcycleGAN/datasets/CT/anon_crpd.nrrd'
+pth1 = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/ground_truth_data/PATIENT11/'
+gnd_ct = 'LIS_PATIENT11-label_cropped.nrrd'
+pth2 = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/' \
+       'mr2ct_v3_lighterUnet_gradientConsistency_batchSize4/epoch_200/'
+seg_ct = 'test_ep200_0007_segmentation.seg.nrrd'
+
+ct_data1, header1 = nrrd.read(pth1+gnd_ct, index_order='C')
+print("Original Size: ", ct_data1.shape)
+ct_data2, header2 = nrrd.read(pth2+seg_ct, index_order='C')
+print("Original Size: ", ct_data2.shape)
 # sys.exit()
+
 # Normalize the data between -1 and 1 AND np.ptp(a) -> peak-to-peak returns nothing but np.max(a) - np.min(a)
-ct_data_norm = 2.0 * (ct_data - np.min(ct_data))/np.ptp(ct_data) - 1
-# plt.figure(); plt.imshow(ct_data_norm[40, :, :], cmap='gray'); plt.show()
+# FOR GROUND TRUTH DATA
+ct_data1_norm = 2.0 * (ct_data1 - np.min(ct_data1))/np.ptp(ct_data1) - 1
+ct_data1_norm = np.flipud(np.transpose(ct_data1_norm, (0, 2, 1)))
+print("Transposed and Flipped: ", ct_data1_norm.shape)
+# plt.figure(); plt.imshow(ct_data1_norm[50, :, :], cmap='gray'); plt.show()
+# plt.figure(); plt.imshow(ct_data1_norm[:, 30, :], cmap='gray'); plt.show()
+# plt.figure(); plt.imshow(ct_data1_norm[:, :, 110], cmap='gray'); plt.show()
+# # resizing it to match segmented's shape
+ct_data2_resized = resize(ct_data1_norm, (220, 108, 50))
+print("Resized: ", ct_data2_resized.shape)
+# plt.figure(); plt.imshow(ct_data2_resized[:, :, 22], cmap='gray'); plt.show()
+
+# because slicer needs it in 50x108x220 format, we need to convert it while saving
+nrrd.write(pth1 + 'LIS_PATIENT11_resized' + '.nrrd', np.transpose(ct_data2_resized, (2, 1, 0) ))
+
+# FOR SEGMENTED DATA
+ct_data2_norm = 2.0 * (ct_data2 - np.min(ct_data2))/np.ptp(ct_data2) - 1
+ct_data2_norm = np.flipud(ct_data2_norm)
+print(ct_data2_norm.shape)
+# plt.figure(); plt.imshow(ct_data2_norm[50, :, :], cmap='gray'); plt.show()
+# plt.figure(); plt.imshow(ct_data2_norm[:, 40, :], cmap='gray'); plt.show()
+# plt.figure(); plt.imshow(ct_data2_norm[:, :, 20], cmap='gray'); plt.show()
+
+sys.exit()
+
+# The current problem is that in the ground truth data, the slice-wise segmentation covers less area compared to the
+# synthesized volume segmentation. This segmentation-area-mismatch might cause large errors.
 
 # for patientx_160 series & for miccai series
 if ct_data_norm.shape != (256, 128, 48):
