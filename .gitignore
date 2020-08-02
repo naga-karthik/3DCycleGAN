@@ -5,5 +5,8 @@ saved_models/
 compute_canada/checkpoints/
 nrrd_files/
 utils/*.txt
+utils/*.npy
+utils/*.html
 blg*
 cdr*
+observations/*.docx
