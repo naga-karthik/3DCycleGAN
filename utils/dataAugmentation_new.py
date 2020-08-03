@@ -24,11 +24,11 @@ import os, sys, glob, random
 # file_name = 'normalized_'+mic_num+'_wat_crpd.npy'
 
 # # for actual training data
-# pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withOutScoliotic/train/A/'
-# # load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withScoliotic/'
-# #                              'train/A/normalized_patient*160.npy'))
-# load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withOutScoliotic/'
-#                              'train/A/normalized_*_wat_crpd.npy'))
+# pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_newData_withScoliotic/train/A/'
+# # load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/'
+# #                              'mr2ct_newData_withScoliotic/train/A/normalized_patient*160.npy'))
+# load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/'
+#                              'mr2ct_newData_withScoliotic/train/A/normalized_*_wat_crpd.npy'))
 # print(len(load_path))
 # # load_path_1 = np.random.choice(load_path, 20, replace=False)   # randomly selecting 20 volumes out of 35
 # # print(len(load_path_1))
@@ -47,7 +47,7 @@ import os, sys, glob, random
 #     # temp = [rot_xy, rot_yz, rot_xz]
 #     # ang, ax = [], []
 #     # # Use the snipped below to randomly rotate images
-#     # for i in range(10):
+#     # for i in range(15):
 #     #     angle = np.random.normal(loc=0.0, scale=10.0)
 #     #     rot_axes = random.choice(temp)      # even the axes of rotation are randomly chosen
 #     #     ang.append(angle)
@@ -61,7 +61,7 @@ import os, sys, glob, random
 #     # # sys.exit()
 #
 #     # # Use the snippet below to add random noise
-#     # for i in range(10):
+#     # for i in range(15):
 #     #     mu, sigma = 0.0, 0.01
 #     #     noise = np.random.normal(mu, sigma, mri_data.shape)
 #     #     noisy_img = mri_data + noise
@@ -83,8 +83,8 @@ import os, sys, glob, random
 #     # # plt.figure(); plt.imshow(new_mri_data[40, :, :], cmap='gray'); plt.show()
 #
 #     # Use the snippet below for elastic deformation
-#     for i in range(10):
-#         if i < 7:
+#     for i in range(15):
+#         if i < 10:
 #             deformed_mri = deform_random_grid(mri_data, sigma=4.0, points=3, mode='nearest')
 #             temp_pth = pth + file_name + '_deform3x3x3_' +str(i)+'.npy'
 #             np.save(temp_pth, deformed_mri)
@@ -99,22 +99,26 @@ import os, sys, glob, random
 # plt.figure(); plt.imshow(mri_data[:, :, 30], cmap='gray'); plt.show()
 # plt.figure(); plt.imshow(noisy_mri_data[:, 20, :], cmap='gray'); plt.show()
 
-# for actual CT training data
-# pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withScoliotic/train/B/'
-# load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withScoliotic/'
-#                              'train/B/*crpd.npy'))
-pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data_numpy/'
-load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data_numpy/'
-                             '*crpd.npy'))
-# load_path_1 = np.random.choice(load_path, 15)
+# --------------------------------------------
+# --- for actual CT training data ----
+pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_newData_withScoliotic/train/B/'
+load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/'
+                             'mr2ct_newData_withScoliotic/train/B/*crpd.npy'))
+# pth = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data_numpy/'
+# load_path = sorted(glob.glob('/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data_numpy/'
+#                              '*crpd.npy'))
 # print(len(load_path)); sys.exit()
+load_path_1 = np.random.choice(load_path, 9, replace=False)
 # print(load_path_1); sys.exit()
-# mu_vals, sigma_vals = [], []
 i=0
-for file in load_path:
+for file in load_path_1:
     temp = file.split('/')
     file_name = temp[-1][:-4]   # gets the name of the file as it was saved except the '.npy'
     ct_data = np.load(file)
+
+    # data = np.float32(ct_data)
+    # temp_pth = pth + file_name + '.npy'
+    # np.save(temp_pth, data)
 
     # # randomly selecting an angle from a normal distribution with mean=0 and std=10 degrees
     # # also, randomly selecting the axes along which the 3D images will be rotated.
@@ -124,7 +128,7 @@ for file in load_path:
     # temp = [rot_xy, rot_yz, rot_xz]
     # ang, ax = [], []
     # # Use the snipped below to randomly rotate images
-    # for i in range(3):
+    # for i in range(1):
     #     angle = np.random.normal(loc=0.0, scale=10.0)
     #     rot_axes = random.choice(temp)      # even the axes of rotation are randomly chosen
     #     ang.append(angle)
@@ -133,11 +137,11 @@ for file in load_path:
     #     temp_pth = pth + file_name + '_rotated_' + str(i) + '.npy'
     #     np.save(temp_pth, rotated_ct_data)
     #     # print(rotated_ct_data.shape)
-    # print(ang, ax)
+    # # print(ang, ax)
     # # sys.exit()
 
     # # Use the snippet below to add random noise
-    # for i in range(3):
+    # for i in range(1):
     #     mu, sigma = 0.0, 0.01
     #     noise = np.random.normal(mu, sigma, ct_data.shape)
     #     noisy_img = ct_data + noise
@@ -150,8 +154,8 @@ for file in load_path:
     # # sys.exit()
 
     # Use the snippet below for elastic deformation
-    for i in range(4):
-        if i < 3:
+    for i in range(1):
+        if i < 1:
             deformed_ct = deform_random_grid(ct_data, sigma=4.0, points=3, mode='nearest')
             temp_pth = pth + file_name + '_deform3x3x3_' +str(i)+'.npy'
             np.save(temp_pth, deformed_ct)
@@ -163,9 +167,9 @@ for file in load_path:
             # plt.figure(); plt.imshow(deformed_ct[:, :, 30], cmap='gray'); plt.show()
     # sys.exit()
 
-# # print(ct_data.shape)
-# # plt.figure(); plt.imshow(ct_data[:, :, 30]); plt.show()
-# # plt.figure(); plt.imshow(rotated_ct_data[:, 40, :], cmap='gray'); plt.show()
+# # # print(ct_data.shape)
+# # # plt.figure(); plt.imshow(ct_data[:, :, 30]); plt.show()
+# # # plt.figure(); plt.imshow(rotated_ct_data[:, 40, :], cmap='gray'); plt.show()
 
 
 

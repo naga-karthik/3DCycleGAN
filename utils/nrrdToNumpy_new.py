@@ -14,19 +14,15 @@ import glob
 # has converted the data to float64 format.
 # --------------------------------
 
-# # patient_num= '12'
-# # folder_type_1 = '160'
-# # pth_mri = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR/'
-# # path_mri = pth_mri + '/patient'+patient_num+'_'+folder_type_1+'.nrrd'
-# mic_num = '16'
-# path_mri = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR/'+mic_num+'_wat_crpd.nrrd'
+# patient_num= '12'
+# folder_type_1 = '160'
+# pth_mri = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR/'
+# path_mri = pth_mri + '/patient'+patient_num+'_'+folder_type_1+'.nrrd'
+# # mic_num = '16'
+# # path_mri = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR/'+mic_num+'_wat_crpd.nrrd'
 #
 # mri_data, header1 = nrrd.read(path_mri, index_order='C')
 # print(mri_data.shape)
-#
-# # mri_data = mri_data.transpose(1,2,0)    # to bring it to (256, 128, 128)
-# # print(mri_data.shape)
-# # plt.figure(); plt.imshow(mri_data[:, :, 1]); plt.show()
 #
 # # Normalize the data between -1 and 1 AND np.ptp(a) -> peak-to-peak returns nothing but np.max(a) - np.min(a)
 # mri_data_norm = 2.0 * (mri_data - np.min(mri_data))/np.ptp(mri_data) - 1
@@ -38,11 +34,16 @@ import glob
 #
 # # for patientx_160 series & for miccai series
 # if mri_data_norm.shape != (256, 128, 48):
-#     # for miccai
-#     mri_data_norm = np.flip(resize(mri_data_norm, (256, 128, 48)))   # corresponds to voxel width x height x depth
-#     # # for scoliotic
+#     # # for miccai
+#     # mri_data_norm = np.fliplr(resize(mri_data_norm, (256, 128, 48)))  # corresponds to voxel width x height x depth
+#     # # the above type of flipping works for MICCAI
+#
+#     # for scoliotic
 #     # mri_data_norm = np.flipud(resize(mri_data_norm, (256, 128, 48)))  # corresponds to voxel width x height x depth
-#     # # mri_data_norm = np.flipud(np.flip(resize(mri_data_norm, (256, 128, 48))))   # use only for patient6
+#     # #this (above) was how the data was fed to the model originally. it turns that it is a flipped version and FAIlS.
+#     mri_data_norm = (resize(mri_data_norm, (256, 128, 48)))  # corresponds to voxel width x height x depth
+#     # #this (above) was how test data was fixed, it shows the correct view (not flipped)
+#     # mri_data_norm = np.flip(resize(np.transpose(mri_data_norm, (1, 2, 0)), (256, 128, 48)))   # use only for patient6
 # print(mri_data_norm.shape)
 # # mri_data_norm = np.transpose(mri_data_norm, (2, 1, 0))    # this transpose to used only when viewing on Slicer
 #
@@ -55,12 +56,12 @@ import glob
 # # plt.figure(); plt.imshow(mri_data_norm_1[:, :, 15], cmap='gray'); plt.show()
 # # sys.exit()
 #
-# # # saving path for scoliotic
-# # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withScoliotic/train/A/'
-# # np.save(save_path+'normalized_patient'+patient_num+'_'+folder_type_1, mri_data_norm_1)
-# # saving path for miccai
-# save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/mr2ct_withScoliotic/train/A/'
-# np.save(save_path+'normalized_'+mic_num+'_wat_crpd', mri_data_norm_1)
+# # saving path for scoliotic
+# save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR_numpy/'
+# np.save(save_path+'normalized_patient'+patient_num+'_'+folder_type_1, mri_data_norm_1)
+# # # saving path for miccai
+# # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_MR_numpy/'
+# # np.save(save_path+'normalized_'+mic_num+'_wat_crpd', mri_data_norm_1)
 #
 
 # # Lists for 'spine-1' folder
@@ -75,8 +76,9 @@ import glob
 # patients_list_1 = ['0499']
 # ids_list_1 = ['4407254']
 
-load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data/*.nrrd'
+load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_CT/*.nrrd'
 files = sorted(glob.glob(load_path))
+files = files[:5]
 # print(len(files))
 # sys.exit()
 
@@ -100,7 +102,8 @@ for file in files:
     # Normalize the data between -1 and 1 AND np.ptp(a) -> peak-to-peak returns nothing but np.max(a) - np.min(a)
     # FOR GROUND TRUTH DATA
     ct_data1_norm = 2.0 * (ct_data1 - np.min(ct_data1))/np.ptp(ct_data1) - 1
-    ct_data1_norm = np.flipud(np.transpose(ct_data1_norm, (0, 1, 2)))
+    # ct_data1_norm = np.flipud(np.transpose(ct_data1_norm, (0, 1, 2)))     # use np.flip here
+    ct_data1_norm = (np.transpose(ct_data1_norm, (0, 1, 2)))
     print("Transposed and Flipped: ", ct_data1_norm.shape)
     # plt.figure(); plt.imshow(ct_data1_norm[50, :, :], cmap='gray'); plt.show()
     # plt.figure(); plt.imshow(ct_data1_norm[:, 50, :], cmap='gray'); plt.show()
@@ -119,10 +122,11 @@ for file in files:
     # sys.exit()
 
     # contrast stretching
-    p1, p99 = np.percentile(ct_data_norm, (0.1, 99.9))
+    p1, p99 = np.percentile(ct_data_norm, (0.5, 99.5))
     new_ct_data = rescale_intensity(ct_data_norm, in_range=(p1, p99))
 
-    save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/fixed_new_ct_data_numpy/'
+    # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/original_CT_numpy/'
+    save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/'
     f = file.split('/')
     f1 = f[-1][:-13]
     np.save(save_path+ f1 +'_crpd', new_ct_data)
@@ -166,22 +170,5 @@ for file in files:
 #
 # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/'
 # np.save(save_path + 'cta_crpd_resized', new_ct_data)
-
-
-# ct_data, header2 = nrrd.read(path_ct, index_order='C')
-# print(ct_data.shape)
-# na = ct_data.shape[0]
-# for i in range(na):
-#     filename = ct_save_path+'/'+'axial'+str(i+1)+'.png'
-#     I = ct_data[i,:,:]
-#     img1 = (((I - I.min())/(I.max() - I.min())) * 255).astype(np.uint8)
-#     img1 = Image.fromarray(img1).resize((200,200))
-#     img1.save(filename)
-
-# plt.figure()
-# plt.imshow(ct_data[:,:,1], cmap='gray')
-# plt.xticks([])
-# plt.yticks([])
-# plt.show()
 
 
