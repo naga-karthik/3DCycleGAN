@@ -72,19 +72,19 @@ import matplotlib.pyplot as plt
 
 # Use the same below for testing.
 # --------------- for testing .npy files ----------------
-epoch_nums = [30, 80, 100, 150, 190]
+epoch_nums = [30, 80, 100, 120, 200]
 # epoch_nums = [70, 80, 90, 100]
-epch = epoch_nums[3]
-# load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
-#             'mr2ct_v2_withoutScoliotic_epochs250/realA2fakeB/epoch_' + str(epch) + '/'
+epch = epoch_nums[4]
 load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
-            'mr2ct_v2_withScoliotic_default/realA2fakeB/epoch_' + str(epch) + '/'
+            'mr2ct_v1_RevUnet_gradCon/realA2fakeB/epoch_' + str(epch) + '/'
+# load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
+#             'mr2ct_v2_withScoliotic_default/realA2fakeB/epoch_' + str(epch) + '/'
 # load_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/saved_images/testing_generated/' \
 #             'mr2ct_v4_lighterUnet_gradientConsistency_batchSize4/realA2fakeB/epoch_' + str(epch) + '/'
 path = load_path + '*.npy'
 files = sorted(glob.glob(path))
 
-save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_v2_withScoliotic_default/' \
+save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/mr2ct_v1_RevUnet_gradCon/' \
             'epoch_'+str(epch)
 # save_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/nrrd_files/' \
 #             'mr2ct_v4_lighterUnet_gradientConsistency_batchSize4/epoch_'+str(epch)
