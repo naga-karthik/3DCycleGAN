@@ -1,0 +1,25 @@
+A file for recording observations in PHASE-4 of experimentation with cycleGAN3D.
+
+DATASET: the same dataset mr2ct_newCorrected which was used for the SPIE's results.
+
+CODE CHANGES:
+1) Tried running the reversible network by using RevTorch package available on GitHub. This can be found in models3D_unetReversible file. Also tried using memCNN package, the code for that is in the models3D_revnet and revnet_prev_.. files.
+2) In the default (working) code, 2 notable changes made -> (i) updating the generator more frequently compared to the discriminator to check whether it improves the performance, and (ii) for some reason, there was no InstanceNorm layer in the PatchGAN discriminator. That layer has been added before each leakyReLU layer.
+
+
+ONGOING EXPERIMENTS:
+1) The 5th version of the "working" architecture but explicitly imbalancing the G and D updates. n_gen = 5 in this case. Also, the hyperparameter values for the cycle-consistency is now 3.0 (instead of 10.0 earlier)
+	folder: 
+
+
+OBSERVATIONS:
+(1) The results from the RevTorch version of the reversible architecture did not provide good results. Need to investigate further. It's the same problem of all the generated test volumes being the same.
+(2) Not able to run memCNN version of reversible architecture because of NaN problem. Right from the 1st volume of the 1st epoch, the loss values are NaNs. Need to tweak the architecture to see what the problem is.
+
+
+
+
+
+
+
+
