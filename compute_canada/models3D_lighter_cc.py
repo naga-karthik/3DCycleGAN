@@ -50,7 +50,7 @@ class Deconv3DBlock(nn.Module):
         super(Deconv3DBlock, self).__init__()
 
         self.deconv = nn.Sequential(
-            nn.Upsample(scale_factor=2, mode='nearest'),
+            nn.Upsample(scale_factor=2, mode='trilinear'),
             nn.ReplicationPad3d(1),
             spectral_norm(nn.Conv3d(in_features, out_features, kernel_size=3)),
             nn.InstanceNorm3d(out_features),
@@ -191,7 +191,7 @@ class LighterUnetGenerator3D(nn.Module):
 
         d0 = self.deconv_block0(d_ups_1)
         d_ups_0 = self.ups_conv_block0(d0)
-        print("Up Level 0: ", d_ups_0.shape)
+        # print("Up Level 0: ", d_ups_0.shape)
 
         fin = self.tanh(self.conv_1x1(d_ups_0))
         # print("Final Output: ", fin.shape)
@@ -199,7 +199,6 @@ class LighterUnetGenerator3D(nn.Module):
 
 
 # Changelog for PatchGAN discriminator:
-#   1) It now consists of 6 layers instead of 5. * this was before, it has now been reverted back to 5 layers
 #   2) The architecture is such that 46x46x46 patches are seen by the discriminator.
 #   3) In one of the questions on Github's issues, it was noted that for calculating the patch size seen, the padding
 #      is not taken into account. (o/p size - 1)*stride + kernel size = i/p size. Padding is just seen as an indicator
@@ -216,15 +215,20 @@ class PatchGANDiscriminatorwithSpectralNorm(nn.Module):
     def __init__(self, input_nc):
         super(PatchGANDiscriminatorwithSpectralNorm, self).__init__()
 
-        # This PatchGAN architecture has 6 layers (1 more than the original). 46x46x46 sized patches are seen by
+        # This PatchGAN architecture has 5 layers. 46x46x46 sized patches are seen by
         # the discriminator.
-        model = [spectral_norm(nn.Conv3d(input_nc, 32, 4, stride=2, padding=1)),    # from input_nc, 64
+        # EDIT: Instance Norm is added before every leakyReLU layer.
+        model = [spectral_norm(nn.Conv3d(input_nc, 32, kernel_size=4, stride=2, padding=1)),    # from input_nc, 64
+                 nn.InstanceNorm3d(32),
                  nn.LeakyReLU(0.2, inplace=True)]
         model += [spectral_norm(nn.Conv3d(32, 64, kernel_size=4, stride=2, padding=1)),    # 64, 128
+                  nn.InstanceNorm3d(64),
                   nn.LeakyReLU(0.2, inplace=True)]
         model += [spectral_norm(nn.Conv3d(64, 128, kernel_size=4, stride=1, padding=1)),   # 128, 256
+                  nn.InstanceNorm3d(128),
                   nn.LeakyReLU(0.2, inplace=True)]
         model += [spectral_norm(nn.Conv3d(128, 256, kernel_size=4, stride=1, padding=1)),   # 256, 512
+                  nn.InstanceNorm3d(256),
                   nn.LeakyReLU(0.2, inplace=True)]
         model += [spectral_norm(nn.Conv3d(256, 1, kernel_size=4, padding=1))]       # 512, 1
 
