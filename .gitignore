@@ -4,6 +4,10 @@ saved_images/
 saved_models/
 compute_canada/checkpoints/
 nrrd_files/
+compute_canada/lightning/gan
+compute_canada/lightning/mnist.py
+compute_canada/lightning/mnist_gan.py
+compute_canada/lightning/sobel_test.py
 utils/*.txt
 utils/*.npy
 utils/*.html
