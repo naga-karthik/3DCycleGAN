@@ -1,11 +1,10 @@
 import argparse
-import itertools
 import os, sys
 import numpy as np
+import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
-import torch.optim as optim
 from torch.utils.data import DataLoader
 import torchvision
 import torchvision.transforms as transforms
@@ -24,13 +23,15 @@ dataroot = path+'mr2ct_newCorrected/'
 
 log_path = '/home/karthik7/projects/def-laporte1/karthik7/new_env/cycleGAN_lightning/tensorboard_logs/'
 
-version_name = "resnet_both"    # should match with what is used in train3D_unet_pl.py file
-epoch_num = 199
+version_name = "resnet_both_1"    # should match with what is used in train3D_unet_pl.py file
+epoch_num = 75     # ENTER EPOCH NUMBER HERE    
 exp_name = "mr2ct_mcd_" + version_name + "_" + str(epoch_num) + "/"
 # paths for saving the images generated during testing after training ends
 testgen_path_A2B = '/home/karthik7/projects/def-laporte1/karthik7/new_env/cycleGAN_lightning/testing_generated/'+exp_name
 if not os.path.exists(testgen_path_A2B):
     os.makedirs(testgen_path_A2B)
+exp_name_1 = "mr2ct_mcd_" + version_name + "_" + str(epoch_num) + "_images" "/"
+testgen_path_images = '/home/karthik7/projects/def-laporte1/karthik7/new_env/cycleGAN_lightning/testing_generated/'+exp_name_1
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataroot', type=str, default=dataroot, help='root directory of the dataset')
@@ -43,7 +44,8 @@ parser.add_argument('--decay_epoch', type=int, default=100,
 # parser.add_argument('--batch_size', type=int, default=4, help='size of the batches')
 parser.add_argument('--test_batch_size', type=int, default=1, help='size of the batches')
 parser.add_argument('--lr', type=float, default=0.0002, help='initial learning rate')
-parser.add_argument('--mcd_samples', type=int, default=15, help='number of MC samples')
+parser.add_argument('--mcd_samples', type=int, default=20, help='number of MC samples')
+parser.add_argument('--use_dropout', type=bool, default=True, help='enabling dropout by default')
 
 parser.add_argument('--size_z', type=int, default=48, help='default z dimension of the image data')
 parser.add_argument('--size_x', type=int, default=256, help='default x dimension of the image data')
@@ -95,7 +97,7 @@ class MRCTDataModule(pl.LightningDataModule):
 
 class LightningCycleGAN3D(pl.LightningModule):
     def __init__(self, test_batch_size=args.test_batch_size, lr=args.lr, b1=0.5, b2=0.999,
-                 num_feat_maps=[32, 64, 128, 256], num_residual_blocks=9, use_dropout=args.use_dropout,
+                 num_feat_maps=[16, 32, 64, 128, 256], num_residual_blocks=6, use_dropout=args.use_dropout,
                  mcd_samples=args.mcd_samples, **kwargs):
         super().__init__()
         self.save_hyperparameters()
@@ -111,10 +113,10 @@ class LightningCycleGAN3D(pl.LightningModule):
                                           self.hparams.num_residual_blocks, self.hparams.use_dropout)
 
         self.netD_A = PatchGANDiscriminatorwithSpectralNorm(args.input_nc)
-        self.netD_B = PatchGANDiscriminatorwithSpectralNorm(args.output_nc)
+        self.netD_B = PatchGANDiscriminatorwithSpectralNorm(args.input_nc)
 
         self.input_A = torch.Tensor(args.test_batch_size, args.input_nc, args.size_z, args.size_x, args.size_y).to(self.device)
-        self.input_B = torch.Tensor(args.test_batch_size, args.output_nc, args.size_z, args.size_x, args.size_y).to(self.device)
+        self.input_B = torch.Tensor(args.test_batch_size, args.input_nc, args.size_z, args.size_x, args.size_y).to(self.device)
 
     def forward(self, x):
         pass
@@ -144,12 +146,18 @@ class LightningCycleGAN3D(pl.LightningModule):
         mean_mcd_pred_B = (torch.mean(mcd_preds_B, dim=0)).cpu().numpy()
         epistemic_mcd_pred_B = (torch.var(mcd_preds_B, dim=0)).cpu().numpy()
         np.save(testgen_path_A2B + "epistemic_mean_%02d" % (batch_idx + 1), mean_mcd_pred_B)
+
         np.save(testgen_path_A2B + "epistemic_var_%02d" % (batch_idx + 1), epistemic_mcd_pred_B)
+        plt.imsave(testgen_path_images + "epistemic_var_%02d.png" % (batch_idx+1),
+                   epistemic_mcd_pred_B[24, :, :],      # .reshape(args.size, args.size, 3),
+                   cmap='jet', format='png')
 
         # Mean Aleatoric Uncertainty
         aleatoric_pred_B = (torch.mean(aleatoric_maps_B, dim=0)).cpu().numpy()
         np.save(testgen_path_A2B + "aleatoric_mean_%02d" % (batch_idx + 1), aleatoric_pred_B)
-
+        plt.imsave(testgen_path_images + "aleatoric_%02d.png" % (batch_idx+1),
+                   aleatoric_pred_B[24, :, :],
+                   cmap='jet', format='png')
 
         # OK, SO THE REASON TO USE A SEPARATE FILE FOR TESTING IS JUST TO SAVE THE GENERATED VOLUMES.
             # LOAD THE CHECKPOINT, DO A FORWARD PASS, AND SAVE THE RESULTING VOLUME AS A NUMPY ARRAY - THAT'S IT
@@ -181,7 +189,7 @@ if __name__ == '__main__':
 
     # checkpoint_path = log_path + 'cyclegan3d_16bit/version_' + str(v_num) + '/checkpoints/test_epoch=' + \
                       # str(epoch_num) + '.ckpt'
-    checkpoint_path = log_path + 'cyclegan3d_16bit/' + version_name + '/checkpoints/epoch=' +str(epoch_num)+'.ckpt'
+    checkpoint_path = log_path + 'cyclegan3d_16bit/' + version_name + '/checkpoints/epoch_' +str(epoch_num)+'.ckpt'
     dm = MRCTDataModule()
     model = LightningCycleGAN3D.load_from_checkpoint(checkpoint_path)
     trainer = pl.Trainer(precision=16, gpus=1)
@@ -210,6 +218,4 @@ if __name__ == '__main__':
     # trainer = pl.Trainer(precision=16, gpus=2, distributed_backend='ddp', max_epochs=200, progress_bar_refresh_rate=20,
     #                      logger=tb_logger, log_gpu_memory='all')
     # trainer.fit(model, dm)
-
-
 
