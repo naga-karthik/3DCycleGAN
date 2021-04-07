@@ -5,18 +5,18 @@ import sys
 # this getting the landmarks from .o3 file for each patient.
 # dir_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/ANONwithDICOM/'
 dir_path = '/home/karthik/PycharmProjects/DLwithPyTorch/cycleGAN3D/datasets/ANON_latest_5Patients/'
-patient_num = 'PATIENT3/'
-date = '2007-11-14/' # '2008-03-20/'  # '2007-07-25/' # '2007-04-10/' # '2007-11-06/'
+patient_num = 'PATIENT4/'
+date = '2007-11-06/'  # '2007-07-25/' # '2007-11-14/' # '2008-03-20/' # '2007-04-10/'
 # file_name = 'LIS_PATIENT12_edited.o3'
 # file_name = 'LIS_PATIENT11_edited_thoracic.o3'
 # file_name = 'LIS_PATIENT1_edited.o3'
-file_name = 'LIS_PATIENT3_edited.o3'
-# file_name = 'LIS_PATIENT4_edited.o3'
+# file_name = 'LIS_PATIENT3_edited.o3'
+file_name = 'LIS_PATIENT4_edited.o3'
 file = dir_path+patient_num+date+file_name
-save_folder_name = 'individual_vert_p3_vol07/'
-p_num = 'p3'
+save_folder_name = 'individual_vert_p4_vol08/'
+p_num = 'p4'
 
-vname = 'vert_T12'
+vname = 'vert_L2'
 with open(file, 'rt') as f_:
     lines = f_.readlines()
 landmarks = {}
@@ -24,10 +24,11 @@ for i in range(len(lines)):
     x_coord, y_coord, z_coord = [], [], []
     if lines[i].startswith("Objet"):
         name = lines[i].split()[1]
-        if name == 'Vertebre_T12':      # each vertebra has 74 points, except for T12 which has 70 points
+        if name == 'Vertebre_L2':      # each vertebra has 74 points, except for T12 which has 70 points
             # change name here and also at the bottom where file is saved.
-            for j in range(2, 19):  # earlier it was (3, 76) and first line was missed. for T12 use (2, 72)
+            for j in range(2, 68):  # earlier it was (3, 76) and first line was missed (so (2,76)). for T12 use (2, 72)
                                     # PATIENT3 has only 17 points unlike others -> so use (2, 19)
+                                    # PATIENT4 Lumbar vertebrae have 66 points, so -> (2, 68)
                 if not lines[i+j].startswith("#"):  # ignore lines that start with '#'
                     data = lines[i+j].split("   ")
                     # print(data, len(data))
