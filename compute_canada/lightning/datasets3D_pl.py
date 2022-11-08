@@ -50,7 +50,6 @@ if __name__ == '__main__':
     # since the image is already in [-1, 1] range, we normalize it by mu=0 and sigma=1. transforms.Normalize just
     # performs this operation: img = (img-mu)/sigma
 
-    # there is doubt whether we should normalize an image that is already in [-1, 1] range. CHECK THIS
     data = ImageDataset(root_dir=dataroot, transform=transforms_)
     data_loader = DataLoader(dataset=data, batch_size=2, shuffle=True)
     temp = next(iter(data_loader))
