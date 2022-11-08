@@ -5,4 +5,4 @@ initial_codes/*_lynxia.py
 observations/
 utils/dataAugmentation.py
 utils/nrrdToNumpy.py
-utils/NumpyToNrrd.py
+utils/numpyToNrrd.py
