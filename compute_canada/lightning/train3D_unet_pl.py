@@ -280,12 +280,6 @@ class LightningCycleGAN3D(pl.LightningModule):
         self.logger.experiment.add_image('test_synCT_slice_dim2', grid_dim2, batch_idx)
         grid_dim3 = torchvision.utils.make_grid(fake_B[:, :, :, 128, :], nrow=4)
         self.logger.experiment.add_image('test_synCT_slice_dim3', grid_dim3, batch_idx)
-        
-        # # this is how I test on Lynxia. There's no transpose operator at this stage.
-        # # not needed here because there's a separate test file for this
-        # fake_B1 = fake_B.data
-        # fake_B1 = fake_B1.cpu().numpy()
-        # np.save(testgen_path_A2B+'vol_%03d' % (batch_idx+1), fake_B1)
 
 
 if __name__ == '__main__':
